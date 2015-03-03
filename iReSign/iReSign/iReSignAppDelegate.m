@@ -27,6 +27,7 @@ static NSString *kPayloadDirName                            = @"Payload";
 static NSString *kProductsDirName                           = @"Products";
 static NSString *kInfoPlistFilename                         = @"Info.plist";
 static NSString *kiTunesMetadataFileName                    = @"iTunesMetadata";
+static NSString *kFrameworksDirName                         = @"Frameworks";
 
 <<<<<<< e456180ea3e03909d58b98bfdebcf906b9e6b5c9
 static NSString *kKeyBundleIDPlistApp               = @"CFBundleIdentifier";
@@ -527,9 +528,15 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
 - (void)doCodeSigning {
     appPath = nil;
     frameworksDirPath = nil;
+<<<<<<< 9d0e66174eecbb639b33f0315a9808da9779b440
     additionalToSign = NO;
     additionalResourcesToSign = [[NSMutableArray alloc] init];
 
+=======
+    hasFrameworks = NO;
+    frameworks = [[NSMutableArray alloc] init];
+    
+>>>>>>> Make it work with Frameworks.
     NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[workingPath stringByAppendingPathComponent:kPayloadDirName] error:nil];
 
     for (NSString *file in dirContents) {
@@ -540,6 +547,7 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
             appName = file;
             if ([[NSFileManager defaultManager] fileExistsAtPath:frameworksDirPath]) {
                 NSLog(@"Found %@",frameworksDirPath);
+<<<<<<< 9d0e66174eecbb639b33f0315a9808da9779b440
                 additionalToSign = YES;
                 NSArray *frameworksContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:frameworksDirPath error:nil];
                 for (NSString *frameworkFile in frameworksContents) {
@@ -548,6 +556,15 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
                         frameworkPath = [frameworksDirPath stringByAppendingPathComponent:frameworkFile];
                         NSLog(@"Found %@",frameworkPath);
                         [additionalResourcesToSign addObject:frameworkPath];
+=======
+                hasFrameworks = YES;
+                NSArray *frameworksContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:frameworksDirPath error:nil];
+                for (NSString *frameworkFile in frameworksContents) {
+                    if ([[[frameworkFile pathExtension] lowercaseString] isEqualTo:@"framework"]) {
+                        frameworkPath = [frameworksDirPath stringByAppendingPathComponent:frameworkFile];
+                        NSLog(@"Found %@",frameworkPath);
+                        [frameworks addObject:frameworkPath];
+>>>>>>> Make it work with Frameworks.
                     }
                 }
             }
@@ -575,6 +592,7 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
     }
 
     if (appPath) {
+<<<<<<< 9d0e66174eecbb639b33f0315a9808da9779b440
         if (additionalToSign) {
             [self signFile:[additionalResourcesToSign lastObject]];
             [additionalResourcesToSign removeLastObject];
@@ -603,7 +621,42 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
 =======
         if (![[entitlementField stringValue] isEqualToString:@""]) {
             [arguments addObject:[NSString stringWithFormat:@"--entitlements=%@", [entitlementField stringValue]]];
+=======
+        NSMutableArray *arguments = [NSMutableArray arrayWithObjects:@"-fs", [certComboBox objectValue], nil];
+        NSDictionary *systemVersionDictionary = [NSDictionary dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
+        NSString * systemVersion = [systemVersionDictionary objectForKey:@"ProductVersion"];
+        NSArray * version = [systemVersion componentsSeparatedByString:@"."];
+        if ([version[0] intValue]<10 || ([version[0] intValue]==10 && ([version[1] intValue]<9 || ([version[1] intValue]==9 && [version[2] intValue]<5)))) {
+            
+            /*
+             Before OSX 10.9, code signing requires a version 1 signature.
+             The resource envelope is necessary.
+             To ensure it is added, append the resource flag to the arguments.
+             */
+            
+            NSString *resourceRulesPath = [[NSBundle mainBundle] pathForResource:@"ResourceRules" ofType:@"plist"];
+            NSString *resourceRulesArgument = [NSString stringWithFormat:@"--resource-rules=%@",resourceRulesPath];
+            [arguments addObject:resourceRulesArgument];
         }
+        if (hasFrameworks) {
+            [self signFile:[frameworks lastObject]];
+            [frameworks removeLastObject];
+        } else {
+            [self signFile:appPath];
+>>>>>>> Make it work with Frameworks.
+        }
+    }
+}
+
+- (void)signFile:(NSString*)filePath {
+    NSLog(@"Codesigning %@", filePath);
+    [statusLabel setStringValue:[NSString stringWithFormat:@"Codesigning %@",filePath]];
+    
+    NSMutableArray *arguments = [NSMutableArray arrayWithObjects:@"-fs", [certComboBox objectValue], nil];
+    NSDictionary *systemVersionDictionary = [NSDictionary dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
+    NSString * systemVersion = [systemVersionDictionary objectForKey:@"ProductVersion"];
+    NSArray * version = [systemVersion componentsSeparatedByString:@"."];
+    if ([version[0] intValue]<10 || ([version[0] intValue]==10 && [version[1] intValue]<=9)) {
         
         [arguments addObjectsFromArray:[NSArray arrayWithObjects:appPath, nil]];
         
@@ -612,7 +665,18 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
         [codesignTask setArguments:arguments];
         
         [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(checkCodesigning:) userInfo:nil repeats:TRUE];
+        /*
+         Before OSX 10.9, code signing requires a version 1 signature.
+         The resource envelope is necessary.
+         To ensure it is added, append the resource flag to the arguments.
+         */
         
+        NSString *resourceRulesPath = [[NSBundle mainBundle] pathForResource:@"ResourceRules" ofType:@"plist"];
+        NSString *resourceRulesArgument = [NSString stringWithFormat:@"--resource-rules=%@",resourceRulesPath];
+        [arguments addObject:resourceRulesArgument];
+    } else {
+        
+<<<<<<< 9d0e66174eecbb639b33f0315a9808da9779b440
 >>>>>>> add support for changing display name and short version
         
         NSString *resourceRulesPath = [[NSBundle mainBundle] pathForResource:@"ResourceRules" ofType:@"plist"];
@@ -627,10 +691,20 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
          */
         
         NSString *infoPath = [NSString stringWithFormat:@"%@/%@", filePath, kInfoPlistFilename];
+=======
+        /*
+         For OSX 10.9 and later, code signing requires a version 2 signature.
+         The resource envelope is obsolete.
+         To ensure it is ignored, remove the resource key from the Info.plist file.
+         */
+        
+        NSString *infoPath = [NSString stringWithFormat:@"%@/Info.plist", filePath];
+>>>>>>> Make it work with Frameworks.
         NSMutableDictionary *infoDict = [NSMutableDictionary dictionaryWithContentsOfFile:infoPath];
         [infoDict removeObjectForKey:@"CFBundleResourceSpecification"];
         [infoDict writeToFile:infoPath atomically:YES];
         [arguments addObject:@"--no-strict"]; // http://stackoverflow.com/a/26204757
+<<<<<<< 9d0e66174eecbb639b33f0315a9808da9779b440
     }
     
     if (![entitlementsFilePath isEqualToString:@""]) {
@@ -641,6 +715,15 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
     [arguments addObjectsFromArray:[NSArray arrayWithObjects:filePath, nil]];
 
     NSLog(@"Signing arguments = %@", arguments);
+=======
+    }
+    
+    if (![[entitlementField stringValue] isEqualToString:@""]) {
+        [arguments addObject:[NSString stringWithFormat:@"--entitlements=%@", [entitlementField stringValue]]];
+    }
+    
+    [arguments addObjectsFromArray:[NSArray arrayWithObjects:filePath, nil]];
+>>>>>>> Make it work with Frameworks.
     
     codesignTask = [[NSTask alloc] init];
     [codesignTask setLaunchPath:@"/usr/bin/codesign"];
@@ -672,11 +755,19 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
     if ([codesignTask isRunning] == 0) {
         [timer invalidate];
         codesignTask = nil;
+<<<<<<< 9d0e66174eecbb639b33f0315a9808da9779b440
         if (additionalResourcesToSign.count > 0) {
             [self signFile:[additionalResourcesToSign lastObject]];
             [additionalResourcesToSign removeLastObject];
         } else if (additionalToSign) {
             additionalToSign = NO;
+=======
+        if (frameworks.count > 0) {
+            [self signFile:[frameworks lastObject]];
+            [frameworks removeLastObject];
+        } else if (hasFrameworks) {
+            hasFrameworks = NO;
+>>>>>>> Make it work with Frameworks.
             [self signFile:appPath];
         } else {
             NSLog(@"Codesigning done");

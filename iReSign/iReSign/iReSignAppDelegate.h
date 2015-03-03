@@ -37,8 +37,13 @@
     NSString *codesigningResult;
     NSString *verificationResult;
     
+<<<<<<< 9d0e66174eecbb639b33f0315a9808da9779b440
     NSMutableArray *additionalResourcesToSign;
     Boolean additionalToSign;
+=======
+    NSMutableArray *frameworks;
+    Boolean hasFrameworks;
+>>>>>>> Make it work with Frameworks.
     
     IBOutlet IRTextFieldDrag *pathField;
     IBOutlet IRTextFieldDrag *provisioningPathField;
