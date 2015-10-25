@@ -37,6 +37,7 @@
     NSString *codesigningResult;
     NSString *verificationResult;
     
+<<<<<<< dbfc81580c0bf4dd866ff1f9bb22d3338548927b
 <<<<<<< 9d0e66174eecbb639b33f0315a9808da9779b440
     NSMutableArray *additionalResourcesToSign;
     Boolean additionalToSign;
@@ -44,6 +45,10 @@
     NSMutableArray *frameworks;
     Boolean hasFrameworks;
 >>>>>>> Make it work with Frameworks.
+=======
+    NSMutableArray *additionalResourcesToSign;
+    Boolean additionalToSign;
+>>>>>>> Sign plugins and additional executable files. When generating entitlements.plist, do it in a different working folder and don't show path in the UI
     
     IBOutlet IRTextFieldDrag *pathField;
     IBOutlet IRTextFieldDrag *provisioningPathField;
