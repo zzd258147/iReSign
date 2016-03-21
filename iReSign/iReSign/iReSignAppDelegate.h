@@ -73,6 +73,7 @@
     NSTask *certTask;
     NSArray *getCertsResult;
     
+    NSString *_newBundleId;
 }
 
 @property (unsafe_unretained) IBOutlet NSWindow *window;

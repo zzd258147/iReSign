@@ -205,6 +205,7 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
             [statusLabel setStringValue:@"Original app extracted"];
 
             if (changeBundleIDCheckbox.state == NSOnState) {
+                _newBundleId = bundleIDField.stringValue;
                 [self doBundleIDChange:bundleIDField.stringValue];
             }
 
@@ -238,6 +239,7 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
         [statusLabel setStringValue:@".xcarchive app copied"];
 
         if (changeBundleIDCheckbox.state == NSOnState) {
+            _newBundleId = bundleIDField.stringValue;
             [self doBundleIDChange:bundleIDField.stringValue];
         }
 
@@ -359,7 +361,44 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
         [plist setObject:newBundleID forKey:bundleIDKey];
 
         NSData *xmlData = [NSPropertyListSerialization dataWithPropertyList:plist format:options options:kCFPropertyListImmutable error:nil];
+        return [xmlData writeToFile:filePath atomically:YES];
+        
+    }
+    
+    return NO;
+}
 
+- (BOOL)changeExtensionBundleIdPrefixForFile:(NSString *)filePath bundleIDKey:(NSString *)bundleIDKey newBundleIdPrefix:(NSString *)newBundleIdPrefix plistOutOptions:(NSPropertyListWriteOptions)options {
+    
+    NSMutableDictionary *plist = nil;
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+        plist = [[NSMutableDictionary alloc] initWithContentsOfFile:filePath];
+        NSString *oldBundleId = [plist objectForKey:bundleIDKey];
+        NSString *newBundleId = [NSString stringWithFormat:@"%@.%@", newBundleIdPrefix, [[oldBundleId componentsSeparatedByString:@"."] lastObject]];
+        
+        NSLog(@"==============\nold: %@ \nnew: %@", oldBundleId, newBundleId);
+        [plist setObject:newBundleId forKey:bundleIDKey];
+        
+        if ([plist objectForKey:@"NSExtension"] && [plist objectForKey:@"NSExtension"][@"NSExtensionAttributes"]) {
+            NSMutableDictionary *extensionAttributes = [[plist objectForKey:@"NSExtension"][@"NSExtensionAttributes"] mutableCopy];
+            NSString *WKAppBundleIdentifier = extensionAttributes[@"WKAppBundleIdentifier"];
+            NSString *newWKAppBundleIdentifier = [NSString stringWithFormat:@"%@.%@", newBundleIdPrefix, [[WKAppBundleIdentifier componentsSeparatedByString:@"."] lastObject]];
+            NSLog(@"============\nold WKAppBundleIdentifier: %@, \nnew:%@", WKAppBundleIdentifier, newWKAppBundleIdentifier);
+            extensionAttributes[@"WKAppBundleIdentifier"] = newWKAppBundleIdentifier;
+            
+            NSMutableDictionary *extensionDict = [[plist objectForKey:@"NSExtension"] mutableCopy];
+            extensionDict[@"NSExtensionAttributes"] = extensionAttributes;
+            
+            [plist setObject:extensionDict forKey:@"NSExtension"];
+        }
+        
+        if ([plist objectForKey:@"WKCompanionAppBundleIdentifier"]) {
+            [plist setObject:newBundleIdPrefix forKey:@"WKCompanionAppBundleIdentifier"];
+        }
+        
+        NSData *xmlData = [NSPropertyListSerialization dataWithPropertyList:plist format:options options:kCFPropertyListImmutable error:nil];
+        
         return [xmlData writeToFile:filePath atomically:YES];
 
     }
@@ -619,6 +658,9 @@ static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
                 NSString* dirToSign = [InfoPlistPath stringByDeletingLastPathComponent];
                 NSLog(@"Found %@", dirToSign);
                 [additionalResourcesToSign addObject:dirToSign];
+                
+                [self changeExtensionBundleIdPrefixForFile:InfoPlistPath bundleIDKey:kKeyBundleIDPlistApp newBundleIdPrefix:_newBundleId plistOutOptions:NSPropertyListBinaryFormat_v1_0];
+
             }
         }
     }
