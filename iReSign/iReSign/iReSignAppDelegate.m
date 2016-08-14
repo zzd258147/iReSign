@@ -22,6 +22,7 @@ static NSString *kProductsDirName                   = @"Products";
 static NSString *kInfoPlistFilename                 = @"Info.plist";
 static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
 static NSString *kBundleExecutableName              = @"CFBundleExecutable";
+static NSString *kFileSharingEnabledName            = @"UIFileSharingEnabled";
 
 @implementation iReSignAppDelegate
 
@@ -288,6 +289,7 @@ static NSString *kBundleExecutableName              = @"CFBundleExecutable";
         }
     }
     
+    [self changeFileSharingEnabled:YES atFilePath:infoPlistPath plistOutOptions:NSPropertyListBinaryFormat_v1_0];
     return [self changeBundleIDForFile:infoPlistPath bundleIDKey:kKeyBundleIDPlistApp newBundleID:newBundleID plistOutOptions:NSPropertyListBinaryFormat_v1_0];
 }
 
@@ -304,6 +306,20 @@ static NSString *kBundleExecutableName              = @"CFBundleExecutable";
 
     }
 
+    return NO;
+}
+
+- (BOOL)changeFileSharingEnabled:(BOOL)enabled atFilePath:(NSString *)filePath plistOutOptions:(NSPropertyListWriteOptions)options {
+    NSMutableDictionary *plist = nil;
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+        plist = [[NSMutableDictionary alloc] initWithContentsOfFile:filePath];
+        [plist setObject:@(enabled) forKey:kFileSharingEnabledName];
+        
+        NSData *xmlData = [NSPropertyListSerialization dataWithPropertyList:plist format:options options:kCFPropertyListImmutable error:nil];
+        return [xmlData writeToFile:filePath atomically:YES];
+    }
+    
     return NO;
 }
 
