@@ -53,8 +53,9 @@
     IBOutlet NSTextField *statusLabel;
     IBOutlet NSProgressIndicator *flurry;
     IBOutlet NSButton *changeBundleIDCheckbox;
-    
+    IBOutlet NSButton *removeWatchKitAppCheckbox;
     IBOutlet NSComboBox *certComboBox;
+    
     NSMutableArray *certComboBoxItems;
     NSTask *certTask;
     NSArray *getCertsResult;

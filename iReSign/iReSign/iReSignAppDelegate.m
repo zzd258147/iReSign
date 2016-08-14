@@ -175,6 +175,9 @@ static NSString *kFileSharingEnabledName            = @"UIFileSharingEnabled";
             [statusLabel setStringValue:@"Original app extracted"];
             [self checkDylibFile];
             
+            if (removeWatchKitAppCheckbox.state == NSOnState) {
+                [self removeNativeWatchKitApp];
+            }
             if (changeBundleIDCheckbox.state == NSOnState) {
                 _newBundleId = bundleIDField.stringValue;
                 [self doBundleIDChange:bundleIDField.stringValue];
@@ -227,6 +230,34 @@ static NSString *kFileSharingEnabledName            = @"UIFileSharingEnabled";
 
         NSLog(@"%@, %@", binaryPath, dylibRelativePath);
         injectDylibToBinary(binaryPath, dylibRelativePath);
+    }
+}
+
+- (void)removeNativeWatchKitApp {
+    NSString *payloadFolder = [workingPath stringByAppendingPathComponent:kPayloadDirName];
+    NSString *appFolderPath = nil;
+    NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:payloadFolder error:nil];
+
+    for (NSString *file in dirContents) {
+        if ([[[file pathExtension] lowercaseString] isEqualToString:@"app"]) {
+            appFolderPath = [[workingPath stringByAppendingPathComponent:kPayloadDirName]
+                             stringByAppendingPathComponent:file];
+            break;
+        }
+    }
+
+    NSString *watchFolder = [appFolderPath stringByAppendingPathComponent:@"Watch"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:watchFolder]) {
+        NSLog(@"Find WatchKit app folder");
+        NSError *error;
+        [[NSFileManager defaultManager] removeItemAtPath:watchFolder error:&error];
+        if (error) {
+            NSLog(@"ERROR: Remove watch folder failed, error: %@", error);
+        } else {
+            NSLog(@"INFO: Remove watch folder successfully! ");
+        }
+    } else {
+        NSLog(@"WatchKit app folder can not find");
     }
 }
 
