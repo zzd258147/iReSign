@@ -45,7 +45,8 @@
     IBOutlet IRTextFieldDrag *entitlementField;
     IBOutlet IRTextFieldDrag *bundleIDField;
     IBOutlet IRTextFieldDrag *dylibField;
-
+    IBOutlet IRTextFieldDrag *nameField;
+ 
     IBOutlet NSButton    *browseButton;
     IBOutlet NSButton    *provisioningBrowseButton;
     IBOutlet NSButton *entitlementBrowseButton;
@@ -53,6 +54,7 @@
     IBOutlet NSTextField *statusLabel;
     IBOutlet NSProgressIndicator *flurry;
     IBOutlet NSButton *changeBundleIDCheckbox;
+    IBOutlet NSButton *changeNameCheckBox;
     IBOutlet NSButton *removeWatchKitAppCheckbox;
     IBOutlet NSComboBox *certComboBox;
     

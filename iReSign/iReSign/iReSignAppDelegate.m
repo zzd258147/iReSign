@@ -23,6 +23,9 @@ static NSString *kInfoPlistFilename                 = @"Info.plist";
 static NSString *kiTunesMetadataFileName            = @"iTunesMetadata";
 static NSString *kBundleExecutableName              = @"CFBundleExecutable";
 static NSString *kFileSharingEnabledName            = @"UIFileSharingEnabled";
+static NSString *kKeyBundleDisplayNameApp                   = @"CFBundleDisplayName";
+static NSString *kKeyBundleDisplayNamePlistiTunesArtwork    = @"bundleDisplayName";
+
 
 @implementation iReSignAppDelegate
 
@@ -182,6 +185,9 @@ static NSString *kFileSharingEnabledName            = @"UIFileSharingEnabled";
                 _newBundleId = bundleIDField.stringValue;
                 [self doBundleIDChange:bundleIDField.stringValue];
             }
+            if (changeNameCheckBox.state == NSOnState) {
+                [self doDisplayNameChange:nameField.stringValue];
+            }
             
             if ([[provisioningPathField stringValue] isEqualTo:@""]) {
                 [self doCodeSigning];
@@ -269,10 +275,17 @@ static NSString *kFileSharingEnabledName            = @"UIFileSharingEnabled";
         NSLog(@"Copy done");
         [statusLabel setStringValue:@".xcarchive app copied"];
         
+        if (removeWatchKitAppCheckbox.state == NSOnState) {
+            [self removeNativeWatchKitApp];
+        }
         if (changeBundleIDCheckbox.state == NSOnState) {
             _newBundleId = bundleIDField.stringValue;
             [self doBundleIDChange:bundleIDField.stringValue];
         }
+        if (changeNameCheckBox.state == NSOnState) {
+            [self doDisplayNameChange:nameField.stringValue];
+        }
+
         
         if ([[provisioningPathField stringValue] isEqualTo:@""]) {
             [self doCodeSigning];
@@ -291,6 +304,96 @@ static NSString *kFileSharingEnabledName            = @"UIFileSharingEnabled";
     return success;
 }
 
+- (BOOL)doDisplayNameChange:(NSString *)displayName {
+    
+    //1. change xx.lproj/InfoPlist.strings files
+    BOOL success = YES;
+    NSMutableArray *stringsFiles = [@[] mutableCopy];
+    NSString *appFolder = [workingPath stringByAppendingPathComponent:kPayloadDirName];
+    NSDirectoryEnumerator *appPathEnumerator = [[NSFileManager defaultManager] enumeratorAtPath:appFolder];
+    NSString *fileInAppFolder = nil;
+    while ((fileInAppFolder = [appPathEnumerator nextObject]) != nil) {
+        if ([fileInAppFolder hasSuffix:@".lproj/InfoPlist.strings"]) {
+            [stringsFiles addObject:[appFolder stringByAppendingPathComponent:fileInAppFolder]];
+        }
+    }
+    
+    success &= [self changeDisplayNameInStringsFiles:stringsFiles displayNameKey:kKeyBundleDisplayNameApp newDisplayName:displayName plistOutOptions:NSPropertyListBinaryFormat_v1_0];
+    
+    //2. change display name in two plists
+    success &= [self changeKeyValueInAppPlistFileWithKey:kKeyBundleDisplayNameApp newValue:displayName];
+    success &= [self changeKeyValueInITunesMetadataPlistFileWithKey:kKeyBundleDisplayNamePlistiTunesArtwork newValue:displayName];
+    
+    return success;
+    
+}
+
+- (BOOL)changeDisplayNameInStringsFiles:(NSArray *)files displayNameKey:(NSString *)displayNameKey newDisplayName:(NSString *)newDisplayName plistOutOptions:(NSPropertyListWriteOptions)options {
+    BOOL success = YES;
+    if (files.count > 0) {
+        for (NSString *filePath in files) {
+            NSMutableDictionary *plist = nil;
+            
+            if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+                plist = [[NSMutableDictionary alloc] initWithContentsOfFile:filePath];
+                [plist setObject:newDisplayName forKey:displayNameKey];
+                NSData *xmlData = [NSPropertyListSerialization dataWithPropertyList:plist format:options options:kCFPropertyListImmutable error:nil];
+                success &= [xmlData writeToFile:filePath atomically:YES];
+                NSLog(@"change display name %@ : %@", success ? @"succeed" : @"failed", filePath);
+            }
+        }
+    }
+    
+    return success;
+}
+
+- (BOOL)changeKeyValueInITunesMetadataPlistFileWithKey:(NSString *)key newValue:(NSString *)newValue {
+    NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:workingPath error:nil];
+    NSString *infoPlistPath = nil;
+    
+    for (NSString *file in dirContents) {
+        if ([[[file pathExtension] lowercaseString] isEqualToString:@"plist"]) {
+            infoPlistPath = [workingPath stringByAppendingPathComponent:file];
+            break;
+        }
+    }
+    
+    return [self changeKeyValueForFile:infoPlistPath key:key newValue:newValue plistOutOptions:NSPropertyListXMLFormat_v1_0];
+    
+}
+
+- (BOOL)changeKeyValueInAppPlistFileWithKey:(NSString *)key newValue:(NSString *)newValue {
+    NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[workingPath stringByAppendingPathComponent:kPayloadDirName] error:nil];
+    NSString *infoPlistPath = nil;
+    
+    for (NSString *file in dirContents) {
+        if ([[[file pathExtension] lowercaseString] isEqualToString:@"app"]) {
+            infoPlistPath = [[[workingPath stringByAppendingPathComponent:kPayloadDirName]
+                              stringByAppendingPathComponent:file]
+                             stringByAppendingPathComponent:kInfoPlistFilename];
+            break;
+        }
+    }
+    
+    return [self changeKeyValueForFile:infoPlistPath key:key newValue:newValue plistOutOptions:NSPropertyListXMLFormat_v1_0];
+}
+
+- (BOOL)changeKeyValueForFile:(NSString *)filePath key:(NSString *)bundleIDKey newValue:(NSString *)newBundleID plistOutOptions:(NSPropertyListWriteOptions)options {
+    
+    NSMutableDictionary *plist = nil;
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+        plist = [[NSMutableDictionary alloc] initWithContentsOfFile:filePath];
+        [plist setObject:newBundleID forKey:bundleIDKey];
+        
+        NSData *xmlData = [NSPropertyListSerialization dataWithPropertyList:plist format:options options:kCFPropertyListImmutable error:nil];
+        
+        return [xmlData writeToFile:filePath atomically:YES];
+        
+    }
+    
+    return NO;
+}
 
 - (BOOL)doITunesMetadataBundleIDChange:(NSString *)newBundleID {
     NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:workingPath error:nil];
@@ -876,6 +979,14 @@ static NSString *kFileSharingEnabledName            = @"UIFileSharingEnabled";
     }
     
     bundleIDField.enabled = changeBundleIDCheckbox.state == NSOnState;
+}
+
+- (IBAction)changeNamePressed:(id)sender {
+    if (sender != changeNameCheckBox) {
+        return;
+    }
+    
+    nameField.enabled = changeNameCheckBox.state == NSOnState;
 }
 
 - (void)disableControls {
