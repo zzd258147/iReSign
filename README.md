@@ -3,6 +3,18 @@ iReSign
 
 iReSign allows iDevice app bundles (.ipa) files to be signed or resigned with a digital certificate from Apple for distribution. It can also create signed iDevice app bundles (.ipa) files from .xcarchive files.  This tool is aimed at enterprises users, for enterprise deployment, when the person signing the app is different than the person(s) developing it.
 
+Screenshot
+=======
+![](https://raw.githubusercontent.com/qiaoxueshi/iReSign/master/iResign-screenshot.png)
+
+What can you do with iReSign?
+=======
+* Resign the app and **extensions** with new certificate and new provison file
+* Change app's display name 
+* Change the identifier
+* **Remove native WatchKit app**
+* **Inject dynamaic library (dylib file)**
+
 How to use
 =======
 
