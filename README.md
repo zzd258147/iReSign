@@ -5,7 +5,7 @@ iReSign allows iDevice app bundles (.ipa) files to be signed or resigned with a 
 
 Screenshot
 =======
-![](https://raw.githubusercontent.com/qiaoxueshi/iReSign/master/iResign-screenshot.png)
+<img src="https://raw.githubusercontent.com/qiaoxueshi/iReSign/master/iResign-screenshot.png" width="482">
 
 What can you do with iReSign?
 =======
