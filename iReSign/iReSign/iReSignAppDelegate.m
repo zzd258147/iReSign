@@ -644,6 +644,17 @@ static NSString *kKeyBundleDisplayNamePlistiTunesArtwork    = @"bundleDisplayNam
 
 - (void)doEntitlementsEdit
 {
+    //ref: https://github.com/maciekish/iReSign/pull/96/commits/674731de0615b54ce3278579a324dc93da4c62be
+    //macOS 10.12 bug: /usr/bin/security appends a junk line at the top of the XML file.
+    if ([entitlementsResult containsString:@"SecPolicySetValue"])
+    {
+        NSRange newlineRange = [entitlementsResult rangeOfString:@"\n"];
+        if(newlineRange.location != NSNotFound) {
+            entitlementsResult = [entitlementsResult substringFromIndex:newlineRange.location];
+        }
+    }
+    //end macOS 10.12 bug fix.
+    
     NSDictionary* entitlements = entitlementsResult.propertyList;
     entitlements = entitlements[@"Entitlements"];
     NSString* filePath = [entitlementsDirPath stringByAppendingPathComponent:@"entitlements.plist"];
