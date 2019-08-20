@@ -40,8 +40,6 @@
 		C142472F1381B75B00F5B51F /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = Icon.icns; path = ../Icon.icns; sourceTree = "<group>"; };
 		D8D26A801CA1BB8500AB4165 /* yololib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = yololib.h; sourceTree = "<group>"; };
 		D8D26A811CA1BB8500AB4165 /* yololib.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = yololib.m; sourceTree = "<group>"; };
-		DF1BF30B18D76F3800AF6E6F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = "zh-Hans"; path = "zh-Hans.lproj/MainMenu.xib"; sourceTree = "<group>"; };
-		DF1BF30C18D76F3800AF6E6F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,7 +163,6 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
-				"zh-Hans",
 			);
 			mainGroup = C115EE1B13815023003B9ACC;
 			productRefGroup = C115EE2713815024003B9ACC /* Products */;
@@ -211,7 +208,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				C115EE3413815024003B9ACC /* en */,
-				DF1BF30C18D76F3800AF6E6F /* zh-Hans */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -220,7 +216,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				C115EE4013815024003B9ACC /* en */,
-				DF1BF30B18D76F3800AF6E6F /* zh-Hans */,
 			);
 			name = MainMenu.xib;
 			sourceTree = "<group>";
